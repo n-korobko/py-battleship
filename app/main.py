@@ -60,6 +60,7 @@ class Battleship:
             ]
     ) -> None:
         self.field = {}
+        self.ships = []
         for ship_start, ship_end in ships:
             ship = Ship(ship_start, ship_end)
 
@@ -78,3 +79,105 @@ class Battleship:
         if ship.is_drowned:
             return "Sunk!"
         return "Hit!"
+
+    def _validate_field(
+            self,
+            ships: List[
+                Tuple[
+                    Tuple[int, int],
+                    Tuple[int, int],
+                ]
+            ],
+    ) -> None:
+        if len(ships) != 10:
+            raise ValueError(
+                "There must be exactly 10 ships."
+            )
+
+        ship_sizes = {1: 0, 2: 3, 3: 2, 4: 1}
+        found_sizes = {1: 0, 2: 0, 3: 0, 4: 0}
+
+        occupied_cells = set()
+
+        for start, end in ships:
+            start_row, start_col = start
+            end_row, end_col = end
+
+            # Validate boundaries
+            if not (
+                    0 <= start_row <= 9
+                    and 0 <= start_col <= 9
+                    and 0 <= end_row <= 9
+                    and 0 <= end_col <= 9
+            ):
+                raise ValueError(
+                    "Ship coordinates must be between 0 and 9."
+                )
+
+            # Must be horizontal or vertical
+            if start_row != end_row and start_col != end_col:
+                raise ValueError(
+                    "Ships must be placed horizontally or vertically."
+                )
+
+            # Ensure start <= end
+            if start_row > end_row or start_col > end_col:
+                raise ValueError(
+                    "Ship start must be before its end."
+                )
+
+            # Build ship cells
+            if start_row == end_row:
+                size = end_col - start_col + 1
+                cells = [
+                    (start_row, col)
+                    for col in range(start_col, end_col + 1)
+                ]
+            else:
+                size = end_row - start_row + 1
+                cells = [
+                    (row, start_col)
+                    for row in range(start_row, end_row + 1)
+                ]
+
+            if size not in found_sizes:
+                raise ValueError("Invalid ship size.")
+
+            found_sizes[size] += 1
+
+            # Check adjacency
+            for row_index, col_index in cells:
+                neighbor_positions = [
+                    (row_index + delta_row, col_index + delta_col)
+                    for delta_row in (-1, 0, 1)
+                    for delta_col in (-1, 0, 1)
+                ]
+
+                for neighbor_row, neighbor_col in neighbor_positions:
+                    if (neighbor_row, neighbor_col) in occupied_cells:
+                        raise ValueError(
+                            "Ships cannot touch each other."
+                        )
+
+            occupied_cells.update(cells)
+
+        if found_sizes != ship_sizes:
+            raise ValueError("Incorrect ship composition.")
+
+    def print_field(self) -> None:
+        field_matrix = [["~" for _ in range(10)] for _ in range(10)]
+
+        for (row, col), ship in self.field.items():
+            deck = ship.get_deck(row, col)
+
+            if ship.is_drowned:
+                symbol = "x"
+            elif not deck.is_alive:
+                symbol = "*"
+            else:
+                symbol = "□"
+
+            field_matrix[row][col] = symbol
+
+        for row in field_matrix:
+            print(" ".join(row))
