@@ -20,16 +20,11 @@ class Ship:
             end: Tuple[int, int],
             is_drowned: bool = False
     ) -> None:
-        self.start = start
-        self.end = end
         self.is_drowned = is_drowned
         self.decks = []
 
-        start_row = start[0]
-        start_col = start[1]
-
-        end_row = end[0]
-        end_col = end[1]
+        start_row, start_col = start
+        end_row, end_col = end
         if start_row == end_row:
             for col in range(min(start_col, end_col),
                              max(start_col, end_col) + 1):
@@ -64,11 +59,9 @@ class Battleship:
                 Tuple[Tuple[int, int], Tuple[int, int]]
             ]
     ) -> None:
-        self.ships = []
         self.field = {}
         for ship_start, ship_end in ships:
             ship = Ship(ship_start, ship_end)
-            self.ships.append(ship)
 
             for deck in ship.decks:
                 self.field[(deck.row, deck.column)] = ship
